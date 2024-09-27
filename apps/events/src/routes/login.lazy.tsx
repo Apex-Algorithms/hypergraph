@@ -4,6 +4,7 @@ import { createLazyFileRoute, redirect } from "@tanstack/react-router";
 import { Client, Signer, useClient, XMTPProvider } from "@xmtp/react-sdk";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
+import { useWalletClient } from "wagmi";
 
 const Login = () => {
   const [signer, setSigner] = useState<null | Signer>(null);
@@ -13,7 +14,6 @@ const Login = () => {
     let provider;
 
     try {
-      // @ts-expect-error ethereum is defined in the browser
       if (window.ethereum == null) {
         // If MetaMask is not installed, we use the default provider,
         // which is backed by a variety of third-party services (such
@@ -25,7 +25,6 @@ const Login = () => {
         // Connect to the MetaMask EIP-1193 object. This is a standard
         // protocol that allows Ethers access to make all read-only
         // requests through MetaMask.
-        // @ts-expect-error ethereum is defined in the browser
         provider = new ethers.BrowserProvider(window.ethereum);
 
         // It also provides an opportunity to request access to write
@@ -46,7 +45,6 @@ const Login = () => {
     async function runEffect() {
       const storedSignerAddress = localStorage.getItem("signerAddress");
       if (storedSignerAddress) {
-        // @ts-expect-error ethereum is defined in the browser
         const provider = new ethers.BrowserProvider(window.ethereum);
         const newSigner = await provider.getSigner();
         setSigner(newSigner);
@@ -71,6 +69,7 @@ const Login = () => {
 
 function XmtpLogin({ signer }: { signer: Signer }) {
   const { error, isLoading, initialize } = useClient();
+  const { data: walletClient } = useWalletClient();
 
   const initXmtpWithKeys = async () => {
     const address = await signer?.getAddress();

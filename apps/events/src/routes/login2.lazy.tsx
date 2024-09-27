@@ -23,29 +23,34 @@ function Login() {
       const embeddedWallet =
         wallets.find((wallet) => wallet.walletClientType === "privy") ||
         wallets[0];
+
+      console.log("wallets", wallets);
+
       if (embeddedWallet.walletClientType === "privy") {
         // Works with social
         const provider = await embeddedWallet.getEthersProvider();
         const newSigner = provider.getSigner();
+        const address = await newSigner.getAddress();
         newSigner.signMessage = async (message) => {
           const uiConfig = {
-            title: "Enable Secure Messaging with XMTP",
+            title: "Enable GraphFramework XMTP",
             description:
               "What is XMTP? XMTP provides apps and websites with private, secure, and encrypted messaging without your email or phone number. To turn on secure messaging for this app, tap the 'Enable XMTP' button.",
             buttonText: "Enable XMTP",
           };
 
           const signature = await signMessage(message, uiConfig);
-
           return signature;
         };
+        localStorage.setItem("signerAddress", address);
         setSigner(newSigner);
-      } else if (typeof window.ethereum !== undefined) {
+      } else if (window.ethereum == null) {
         try {
           await window.ethereum.enable();
           const provider = new ethers.BrowserProvider(window.ethereum);
-
           const newSigner = await provider.getSigner();
+          const address = await newSigner.getAddress();
+          localStorage.setItem("signerAddress", address);
           setSigner(newSigner);
         } catch (error) {
           console.error("User rejected request", error);
@@ -59,8 +64,6 @@ function Login() {
       getSigner();
     }
   }, [wallets]);
-
-  console.log("signer", signer);
 
   return (
     <div className="flex flex-1 justify-center items-center flex-col gap-4">

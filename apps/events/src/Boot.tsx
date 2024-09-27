@@ -1,12 +1,19 @@
 import { PrivyProvider } from "@privy-io/react-auth";
+import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { ready } from "libsodium-wrappers";
 import { useEffect, useState } from "react";
-
+import { http } from "wagmi";
+import { mainnet } from "wagmi/chains";
 import { routeTree } from "./routeTree.gen";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
+
+const config = createConfig({
+  chains: [mainnet], // Pass your required chains as an array
+  transports: { [mainnet.id]: http() },
+});
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
@@ -28,20 +35,22 @@ export function Boot() {
     <PrivyProvider
       appId="cm1gt9i1b002g12ih6b6l4vvi"
       config={{
-        // Display email and wallet as login methods
-        loginMethods: ["wallet"],
-        // Customize Privy's appearance in your app
+        embeddedWallets: {
+          createOnLogin: "users-without-wallets",
+          requireUserPasswordOnCreate: true,
+          noPromptOnSignature: false,
+        },
+        loginMethods: ["wallet", "email"],
         appearance: {
+          showWalletLoginFirst: true,
           theme: "light",
           accentColor: "#676FFF",
         },
-        // Create embedded wallets for users who don't have a wallet
-        // embeddedWallets: {
-        //   createOnLogin: "users-without-wallets",
-        // },
       }}
     >
-      <RouterProvider router={router} />
+      <WagmiProvider config={config}>
+        <RouterProvider router={router} />
+      </WagmiProvider>
     </PrivyProvider>
   ) : null;
 }
